@@ -45,6 +45,7 @@ Color presets (work for both `--color` and `--bg`): `lavender`, `pink`, `mint`, 
 
 ## Notes
 
+- Move your mouse cursor near Maxwell — he flinches away from it.
 - Needs roughly an 80×30 terminal — Maxwell is a big cat. Make the window bigger if he looks cut off.
 - Works on both Apple Silicon and Intel Macs (universal binary).
 

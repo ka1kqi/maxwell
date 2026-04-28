@@ -75,4 +75,8 @@ pub struct Cli {
     /// Default `none` keeps your terminal's normal background.
     #[arg(long, value_enum, default_value_t = CatColor::None)]
     pub bg: CatColor,
+
+    /// Disable the flinch effect (Maxwell normally dodges your mouse cursor).
+    #[arg(long)]
+    pub no_flinch: bool,
 }
