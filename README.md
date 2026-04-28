@@ -4,8 +4,18 @@ Maxwell the cat, animated in your terminal. Cycles through 57 frames at 10 fps u
 
 ## Install
 
+**macOS (no Rust required):**
+
 ```sh
-cargo install --path .
+curl -fsSL https://raw.githubusercontent.com/ka1kqi/maxwell/main/install.sh | sh
+```
+
+You'll be asked for your Mac password (the installer needs it to put `maxwell` in `/usr/local/bin`). After that, type `maxwell` in any Terminal window.
+
+**From source (any platform with Rust):**
+
+```sh
+cargo install --git https://github.com/ka1kqi/maxwell
 ```
 
 ## Use
