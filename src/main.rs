@@ -1,3 +1,4 @@
+mod animation;
 mod cli;
 mod pose;
 
