@@ -36,7 +36,7 @@ Two layered animations:
 
 Render rate: **2 fps**. Most ticks return a frame identical to the previous one; cellophane's frame diffing makes this essentially free.
 
-Color: a single warm pastel applied uniformly to the sprite glyphs — cream `#ffd9a8` (`Color::Rgb { r: 255, g: 217, b: 168 }`). One color per session, no cycling. Background untouched (uses terminal default).
+Color: a single soft pastel applied uniformly to the sprite glyphs — lavender `#b19cd9` (`Color::Rgb { r: 177, g: 156, b: 217 }`). One color per session, no cycling. Background untouched (uses terminal default).
 
 If `--<pose>` flag is passed, the pose cycle is disabled — only the breathing bob runs.
 
