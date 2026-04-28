@@ -1,0 +1,8 @@
+[package]
+name = "pet"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cellophane = "0.2.3"
+clap = { version = "4.6.1", features = ["derive"] }
