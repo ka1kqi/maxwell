@@ -70,4 +70,9 @@ pub struct Cli {
     /// (helpful if you have an unusual background).
     #[arg(long, value_enum, default_value_t = CatColor::Lavender)]
     pub color: CatColor,
+
+    /// Background color tint for the whole screen while maxwell runs.
+    /// Default `none` keeps your terminal's normal background.
+    #[arg(long, value_enum, default_value_t = CatColor::None)]
+    pub bg: CatColor,
 }

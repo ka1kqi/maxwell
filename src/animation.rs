@@ -10,15 +10,17 @@ pub struct CatAnimation {
     cols: usize,
     started: Option<Instant>,
     color: Option<Color>,
+    bg: Option<Color>,
 }
 
 impl CatAnimation {
-    pub fn new(color: Option<Color>) -> Self {
+    pub fn new(color: Option<Color>, bg: Option<Color>) -> Self {
         Self {
             rows: 0,
             cols: 0,
             started: None,
             color,
+            bg,
         }
     }
 
@@ -35,7 +37,7 @@ impl CatAnimation {
 
 impl Default for CatAnimation {
     fn default() -> Self {
-        Self::new(None)
+        Self::new(None, None)
     }
 }
 
@@ -49,6 +51,19 @@ impl Animation for CatAnimation {
 
     fn update(&mut self) -> Frame {
         let mut frame = Frame::with_capacity(self.cols, self.rows);
+
+        // If a background tint is requested, fill every cell with it first;
+        // cat cells will overwrite where they apply.
+        if let Some(bg) = self.bg {
+            for r in 0..self.rows {
+                for c in 0..self.cols {
+                    if let Some(cell) = frame.get_cell_mut(r, c) {
+                        *cell = Cell::default().with_bg(bg);
+                    }
+                }
+            }
+        }
+
         let frames = frames();
         let idx = self.current_frame_index(frames.len());
         let sprite = &frames[idx];
@@ -59,7 +74,8 @@ impl Animation for CatAnimation {
         for (line_idx, line) in sprite.lines.iter().enumerate() {
             for (col_idx, ch) in line.chars().enumerate() {
                 // Skip blanks and pixel-art background dots so the cat appears
-                // on the terminal's normal background instead of a dot rectangle.
+                // on the terminal's normal (or tinted) background instead of a
+                // dot rectangle.
                 if ch == ' ' || ch == '.' {
                     continue;
                 }
@@ -69,6 +85,9 @@ impl Animation for CatAnimation {
                     let mut new_cell = Cell::default().with_char(ch);
                     if let Some(c) = self.color {
                         new_cell = new_cell.with_fg(c);
+                    }
+                    if let Some(bg) = self.bg {
+                        new_cell = new_cell.with_bg(bg);
                     }
                     *cell = new_cell;
                 }
@@ -94,13 +113,13 @@ mod tests {
 
     #[test]
     fn frame_index_starts_at_zero() {
-        let a = CatAnimation::new(None);
+        let a = CatAnimation::new(None, None);
         assert_eq!(a.current_frame_index(57), 0);
     }
 
     #[test]
     fn frame_index_wraps_modulo_total() {
-        let mut a = CatAnimation::new(None);
+        let mut a = CatAnimation::new(None, None);
         // Pretend the animation started 6 seconds ago: 60 frame intervals at 10 fps,
         // 60 % 57 = 3.
         a.started = Some(Instant::now() - Duration::from_secs(6));
@@ -109,7 +128,7 @@ mod tests {
 
     #[test]
     fn frame_index_advances_with_time() {
-        let mut a = CatAnimation::new(None);
+        let mut a = CatAnimation::new(None, None);
         a.started = Some(Instant::now() - Duration::from_millis(350));
         assert_eq!(a.current_frame_index(57), 3);
     }

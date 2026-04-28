@@ -26,22 +26,22 @@ You can now type `maxwell` in any Terminal window to see him again.
 cargo install --git https://github.com/ka1kqi/maxwell
 ```
 
-## Pick a different color
+## Colors
 
-Maxwell is lavender by default. If your terminal background is colored (blue, dark green, etc.), the lavender may be hard to see. Try one of these:
+Maxwell is lavender by default. Both the cat color and the screen background tint are configurable.
 
 ```sh
-maxwell --color pink
-maxwell --color mint
-maxwell --color peach
-maxwell --color sky
-maxwell --color cream
-maxwell --color white
-maxwell --color yellow
-maxwell --color none      # use your terminal's normal text color (always readable)
+maxwell                                 # lavender cat, your terminal's normal background
+maxwell --color pink                    # pink cat
+maxwell --color none                    # cat in your terminal's default text color (always readable)
+
+maxwell --bg cream                      # cream background tint while maxwell runs
+maxwell --bg sky --color cream          # cream cat on sky-blue background
+
+maxwell --help                          # full list of options and presets
 ```
 
-Run `maxwell --help` to see the full list.
+Color presets (work for both `--color` and `--bg`): `lavender`, `pink`, `mint`, `peach`, `sky`, `cream`, `white`, `yellow`, `none`.
 
 ## Notes
 
