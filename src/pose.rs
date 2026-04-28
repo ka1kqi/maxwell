@@ -27,7 +27,11 @@ fn build_sprite(text: &'static str) -> Sprite {
     }
     let height = lines.len();
     let width = lines.iter().map(|l| l.chars().count()).max().unwrap_or(0);
-    Sprite { lines, height, width }
+    Sprite {
+        lines,
+        height,
+        width,
+    }
 }
 
 static SIT: OnceLock<Sprite> = OnceLock::new();
@@ -68,7 +72,10 @@ mod tests {
         let s = Pose::Sit.sprite();
         assert!(!s.lines.is_empty(), "sit sprite has lines");
         assert_eq!(s.height, s.lines.len());
-        assert_eq!(s.width, s.lines.iter().map(|l| l.chars().count()).max().unwrap_or(0));
+        assert_eq!(
+            s.width,
+            s.lines.iter().map(|l| l.chars().count()).max().unwrap_or(0)
+        );
     }
 
     #[test]

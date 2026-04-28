@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-use std::time::{Duration, Instant};
 use crate::cli::Mode;
 use crate::pose::Pose;
+use std::time::{Duration, Instant};
 
 const POSE_HOLD: Duration = Duration::from_secs(8);
 const BREATH_PERIOD: Duration = Duration::from_millis(2500);
@@ -19,7 +19,11 @@ impl AnimState {
             Mode::Pinned(p) => *p,
             Mode::Cycle => Pose::Sit,
         };
-        Self { mode, current_pose, elapsed: Duration::ZERO }
+        Self {
+            mode,
+            current_pose,
+            elapsed: Duration::ZERO,
+        }
     }
 
     pub fn tick(&mut self, dt: Duration) {
@@ -48,10 +52,14 @@ impl AnimState {
     }
 }
 
-use cellophane::{Animation, Cell, Frame};
 use cellophane::crossterm::style::Color;
+use cellophane::{Animation, Cell, Frame};
 
-const LAVENDER: Color = Color::Rgb { r: 177, g: 156, b: 217 };
+const LAVENDER: Color = Color::Rgb {
+    r: 177,
+    g: 156,
+    b: 217,
+};
 
 pub struct CatAnimation {
     state: AnimState,
@@ -62,7 +70,12 @@ pub struct CatAnimation {
 
 impl CatAnimation {
     pub fn new(mode: Mode) -> Self {
-        Self { state: AnimState::new(mode), rows: 0, cols: 0, last_update: None }
+        Self {
+            state: AnimState::new(mode),
+            rows: 0,
+            cols: 0,
+            last_update: None,
+        }
     }
 }
 
@@ -75,7 +88,9 @@ impl Animation for CatAnimation {
 
     fn update(&mut self) -> Frame {
         let now = Instant::now();
-        let dt = self.last_update.map_or(Duration::ZERO, |t| now.saturating_duration_since(t));
+        let dt = self
+            .last_update
+            .map_or(Duration::ZERO, |t| now.saturating_duration_since(t));
         self.last_update = Some(now);
         self.state.tick(dt);
 
@@ -103,7 +118,9 @@ impl Animation for CatAnimation {
         frame
     }
 
-    fn is_done(&self) -> bool { false }
+    fn is_done(&self) -> bool {
+        false
+    }
 
     fn resize(&mut self, w: usize, h: usize) {
         self.cols = w;
@@ -133,9 +150,17 @@ mod tests {
         s.tick(Duration::from_secs(7));
         assert_eq!(s.current_pose(), Pose::Sit, "still Sit at 7s");
         s.tick(Duration::from_secs(2)); // total 9s
-        assert_eq!(s.current_pose(), Pose::Grass, "Grass after first 8s boundary");
+        assert_eq!(
+            s.current_pose(),
+            Pose::Grass,
+            "Grass after first 8s boundary"
+        );
         s.tick(Duration::from_secs(8)); // total 17s
-        assert_eq!(s.current_pose(), Pose::Curled, "Curled after second boundary");
+        assert_eq!(
+            s.current_pose(),
+            Pose::Curled,
+            "Curled after second boundary"
+        );
         s.tick(Duration::from_secs(8)); // total 25s
         assert_eq!(s.current_pose(), Pose::Sit, "wraps back to Sit");
     }

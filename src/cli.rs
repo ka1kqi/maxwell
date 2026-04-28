@@ -73,6 +73,9 @@ mod tests {
     #[test]
     fn two_flags_is_a_parse_error() {
         let result = Cli::try_parse_from(["pet", "--sit", "--grass"]);
-        assert!(result.is_err(), "clap should reject mutually-exclusive flags");
+        assert!(
+            result.is_err(),
+            "clap should reject mutually-exclusive flags"
+        );
     }
 }
