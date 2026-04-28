@@ -1,3 +1,4 @@
+mod cli;
 mod pose;
 
 fn main() {
