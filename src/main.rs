@@ -11,8 +11,8 @@ use crate::animation::CatAnimation;
 use crate::cli::Cli;
 
 fn main() -> std::io::Result<()> {
-    let _ = Cli::parse();
-    let anim = Box::new(CatAnimation::new());
+    let args = Cli::parse();
+    let anim = Box::new(CatAnimation::new(args.color.to_color()));
     let mut animator = Animator::new(anim).target_fps(10);
     animator.enter()?;
     loop {

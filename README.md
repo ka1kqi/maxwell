@@ -26,9 +26,25 @@ You can now type `maxwell` in any Terminal window to see him again.
 cargo install --git https://github.com/ka1kqi/maxwell
 ```
 
+## Pick a different color
+
+Maxwell is lavender by default. If your terminal background is colored (blue, dark green, etc.), the lavender may be hard to see. Try one of these:
+
+```sh
+maxwell --color pink
+maxwell --color mint
+maxwell --color peach
+maxwell --color sky
+maxwell --color cream
+maxwell --color white
+maxwell --color yellow
+maxwell --color none      # use your terminal's normal text color (always readable)
+```
+
+Run `maxwell --help` to see the full list.
+
 ## Notes
 
-- The cat is rendered in lavender on your terminal's normal background.
 - Needs roughly an 80×30 terminal — Maxwell is a big cat. Make the window bigger if he looks cut off.
 - Works on both Apple Silicon and Intel Macs (universal binary).
 

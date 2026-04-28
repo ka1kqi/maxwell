@@ -4,24 +4,21 @@ use cellophane::{Animation, Cell, Frame};
 use std::time::{Duration, Instant};
 
 const FRAME_INTERVAL: Duration = Duration::from_millis(100); // 10 fps animation rate
-const CAT_COLOR: Color = Color::Rgb {
-    r: 177,
-    g: 156,
-    b: 217,
-};
 
 pub struct CatAnimation {
     rows: usize,
     cols: usize,
     started: Option<Instant>,
+    color: Option<Color>,
 }
 
 impl CatAnimation {
-    pub fn new() -> Self {
+    pub fn new(color: Option<Color>) -> Self {
         Self {
             rows: 0,
             cols: 0,
             started: None,
+            color,
         }
     }
 
@@ -38,7 +35,7 @@ impl CatAnimation {
 
 impl Default for CatAnimation {
     fn default() -> Self {
-        Self::new()
+        Self::new(None)
     }
 }
 
@@ -69,7 +66,11 @@ impl Animation for CatAnimation {
                 let row = start_row + line_idx;
                 let col = start_col + col_idx;
                 if let Some(cell) = frame.get_cell_mut(row, col) {
-                    *cell = Cell::default().with_char(ch).with_fg(CAT_COLOR);
+                    let mut new_cell = Cell::default().with_char(ch);
+                    if let Some(c) = self.color {
+                        new_cell = new_cell.with_fg(c);
+                    }
+                    *cell = new_cell;
                 }
             }
         }
@@ -93,13 +94,13 @@ mod tests {
 
     #[test]
     fn frame_index_starts_at_zero() {
-        let a = CatAnimation::new();
+        let a = CatAnimation::new(None);
         assert_eq!(a.current_frame_index(57), 0);
     }
 
     #[test]
     fn frame_index_wraps_modulo_total() {
-        let mut a = CatAnimation::new();
+        let mut a = CatAnimation::new(None);
         // Pretend the animation started 6 seconds ago: 60 frame intervals at 10 fps,
         // 60 % 57 = 3.
         a.started = Some(Instant::now() - Duration::from_secs(6));
@@ -108,7 +109,7 @@ mod tests {
 
     #[test]
     fn frame_index_advances_with_time() {
-        let mut a = CatAnimation::new();
+        let mut a = CatAnimation::new(None);
         a.started = Some(Instant::now() - Duration::from_millis(350));
         assert_eq!(a.current_frame_index(57), 3);
     }
