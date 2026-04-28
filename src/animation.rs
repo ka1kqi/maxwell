@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use crate::cli::Mode;
 use crate::pose::Pose;
 
@@ -57,11 +57,12 @@ pub struct CatAnimation {
     state: AnimState,
     rows: usize,
     cols: usize,
+    last_update: Option<Instant>,
 }
 
 impl CatAnimation {
     pub fn new(mode: Mode) -> Self {
-        Self { state: AnimState::new(mode), rows: 0, cols: 0 }
+        Self { state: AnimState::new(mode), rows: 0, cols: 0, last_update: None }
     }
 }
 
@@ -73,7 +74,10 @@ impl Animation for CatAnimation {
     }
 
     fn update(&mut self) -> Frame {
-        self.state.tick(Duration::from_millis(16));
+        let now = Instant::now();
+        let dt = self.last_update.map_or(Duration::ZERO, |t| now.saturating_duration_since(t));
+        self.last_update = Some(now);
+        self.state.tick(dt);
 
         let mut frame = Frame::with_capacity(self.cols, self.rows);
         let sprite = self.state.current_pose().sprite();
