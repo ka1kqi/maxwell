@@ -1,5 +1,5 @@
 use crate::pose::frames;
-use cellophane::crossterm::event::{Event, MouseEvent, MouseEventKind};
+use cellophane::crossterm::event::{Event, KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use cellophane::crossterm::style::Color;
 use cellophane::{Animation, Cell, Frame};
 use std::time::{Duration, Instant};
@@ -16,6 +16,7 @@ pub struct CatAnimation {
     bg: Option<Color>,
     mouse_pos: Option<(usize, usize)>,
     flinch_enabled: bool,
+    should_exit: bool,
 }
 
 impl CatAnimation {
@@ -28,6 +29,7 @@ impl CatAnimation {
             bg,
             mouse_pos: None,
             flinch_enabled,
+            should_exit: false,
         }
     }
 
@@ -139,22 +141,25 @@ impl Animation for CatAnimation {
     }
 
     fn on_event(&mut self, event: Event) {
-        if let Event::Mouse(MouseEvent {
-            column,
-            row,
-            kind,
-            ..
-        }) = event
-        {
-            // Track on Move and Drag; ignore button events / scrolls.
-            if matches!(kind, MouseEventKind::Moved | MouseEventKind::Drag(_)) {
-                self.mouse_pos = Some((row as usize, column as usize));
+        match event {
+            Event::Mouse(MouseEvent {
+                column, row, kind, ..
+            }) => {
+                if matches!(kind, MouseEventKind::Moved | MouseEventKind::Drag(_)) {
+                    self.mouse_pos = Some((row as usize, column as usize));
+                }
             }
+            Event::Key(KeyEvent { code, .. }) => {
+                if matches!(code, KeyCode::Char('q') | KeyCode::Char('Q') | KeyCode::Esc) {
+                    self.should_exit = true;
+                }
+            }
+            _ => {}
         }
     }
 
     fn is_done(&self) -> bool {
-        false
+        self.should_exit
     }
 
     fn resize(&mut self, w: usize, h: usize) {

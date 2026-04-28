@@ -16,7 +16,7 @@ Maxwell the cat, animated in your terminal. Cycles through 57 frames at 10 fps u
 
 4. Type `maxwell` and press `Enter`. Maxwell appears.
 
-5. Press `Ctrl` + `C` to make him leave.
+5. Press `q` (or `Ctrl` + `C`) to make him leave.
 
 You can now type `maxwell` in any Terminal window to see him again.
 
