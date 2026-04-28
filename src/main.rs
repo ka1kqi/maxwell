@@ -11,9 +11,9 @@ use crate::animation::CatAnimation;
 use crate::cli::Cli;
 
 fn main() -> std::io::Result<()> {
-    let args = Cli::parse();
-    let anim = Box::new(CatAnimation::new(args.into_mode()));
-    let mut animator = Animator::new(anim).target_fps(2);
+    let _ = Cli::parse();
+    let anim = Box::new(CatAnimation::new());
+    let mut animator = Animator::new(anim).target_fps(10);
     animator.enter()?;
     loop {
         match animator.tick() {

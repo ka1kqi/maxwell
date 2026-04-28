@@ -1,81 +1,44 @@
-#![allow(dead_code)]
-
-use crate::cli::Mode;
-use crate::pose::Pose;
-use std::time::{Duration, Instant};
-
-const POSE_HOLD: Duration = Duration::from_secs(8);
-const BREATH_PERIOD: Duration = Duration::from_millis(2500);
-
-pub struct AnimState {
-    mode: Mode,
-    current_pose: Pose,
-    elapsed: Duration,
-}
-
-impl AnimState {
-    pub fn new(mode: Mode) -> Self {
-        let current_pose = match &mode {
-            Mode::Pinned(p) => *p,
-            Mode::Cycle => Pose::Sit,
-        };
-        Self {
-            mode,
-            current_pose,
-            elapsed: Duration::ZERO,
-        }
-    }
-
-    pub fn tick(&mut self, dt: Duration) {
-        self.elapsed += dt;
-        if matches!(self.mode, Mode::Cycle) {
-            // Pose index based on total elapsed; deterministic, no drift.
-            let secs = self.elapsed.as_secs();
-            let idx = (secs / POSE_HOLD.as_secs()) % 3;
-            self.current_pose = match idx {
-                0 => Pose::Sit,
-                1 => Pose::Grass,
-                2 => Pose::Curled,
-                _ => unreachable!(),
-            };
-        }
-    }
-
-    pub fn current_pose(&self) -> Pose {
-        self.current_pose
-    }
-
-    /// 0 or 1: vertical bob offset for breathing.
-    pub fn breathing_offset(&self) -> usize {
-        let half_periods = (self.elapsed.as_millis() / BREATH_PERIOD.as_millis()) as usize;
-        half_periods % 2
-    }
-}
-
+use crate::pose::frames;
 use cellophane::crossterm::style::Color;
 use cellophane::{Animation, Cell, Frame};
+use std::time::{Duration, Instant};
 
-const LAVENDER: Color = Color::Rgb {
+const FRAME_INTERVAL: Duration = Duration::from_millis(100); // 10 fps animation rate
+const CAT_COLOR: Color = Color::Rgb {
     r: 177,
     g: 156,
     b: 217,
 };
 
 pub struct CatAnimation {
-    state: AnimState,
     rows: usize,
     cols: usize,
-    last_update: Option<Instant>,
+    started: Option<Instant>,
 }
 
 impl CatAnimation {
-    pub fn new(mode: Mode) -> Self {
+    pub fn new() -> Self {
         Self {
-            state: AnimState::new(mode),
             rows: 0,
             cols: 0,
-            last_update: None,
+            started: None,
         }
+    }
+
+    fn current_frame_index(&self, total: usize) -> usize {
+        match self.started {
+            None => 0,
+            Some(t) => {
+                let elapsed = Instant::now().saturating_duration_since(t);
+                (elapsed.as_millis() / FRAME_INTERVAL.as_millis()) as usize % total
+            }
+        }
+    }
+}
+
+impl Default for CatAnimation {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -84,33 +47,29 @@ impl Animation for CatAnimation {
         let (rows, cols) = initial.dims().unwrap_or((0, 0));
         self.rows = rows;
         self.cols = cols;
+        self.started = Some(Instant::now());
     }
 
     fn update(&mut self) -> Frame {
-        let now = Instant::now();
-        let dt = self
-            .last_update
-            .map_or(Duration::ZERO, |t| now.saturating_duration_since(t));
-        self.last_update = Some(now);
-        self.state.tick(dt);
-
         let mut frame = Frame::with_capacity(self.cols, self.rows);
-        let sprite = self.state.current_pose().sprite();
+        let frames = frames();
+        let idx = self.current_frame_index(frames.len());
+        let sprite = &frames[idx];
 
-        // Center horizontally; center vertically with breathing offset.
         let start_col = self.cols.saturating_sub(sprite.width) / 2;
-        let mid_row = self.rows.saturating_sub(sprite.height) / 2;
-        let start_row = mid_row + self.state.breathing_offset();
+        let start_row = self.rows.saturating_sub(sprite.height) / 2;
 
         for (line_idx, line) in sprite.lines.iter().enumerate() {
             for (col_idx, ch) in line.chars().enumerate() {
-                if ch == ' ' {
-                    continue; // preserve transparency over background
+                // Skip blanks and pixel-art background dots so the cat appears
+                // on the terminal's normal background instead of a dot rectangle.
+                if ch == ' ' || ch == '.' {
+                    continue;
                 }
                 let row = start_row + line_idx;
                 let col = start_col + col_idx;
                 if let Some(cell) = frame.get_cell_mut(row, col) {
-                    *cell = Cell::default().with_char(ch).with_fg(LAVENDER);
+                    *cell = Cell::default().with_char(ch).with_fg(CAT_COLOR);
                 }
             }
         }
@@ -133,66 +92,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn cycle_mode_starts_at_sit() {
-        let s = AnimState::new(Mode::Cycle);
-        assert_eq!(s.current_pose(), Pose::Sit);
+    fn frame_index_starts_at_zero() {
+        let a = CatAnimation::new();
+        assert_eq!(a.current_frame_index(57), 0);
     }
 
     #[test]
-    fn pinned_mode_starts_at_pinned_pose() {
-        let s = AnimState::new(Mode::Pinned(Pose::Curled));
-        assert_eq!(s.current_pose(), Pose::Curled);
+    fn frame_index_wraps_modulo_total() {
+        let mut a = CatAnimation::new();
+        // Pretend the animation started 6 seconds ago: 60 frame intervals at 10 fps,
+        // 60 % 57 = 3.
+        a.started = Some(Instant::now() - Duration::from_secs(6));
+        assert_eq!(a.current_frame_index(57), 3);
     }
 
     #[test]
-    fn cycle_advances_at_8_second_boundaries() {
-        let mut s = AnimState::new(Mode::Cycle);
-        s.tick(Duration::from_secs(7));
-        assert_eq!(s.current_pose(), Pose::Sit, "still Sit at 7s");
-        s.tick(Duration::from_secs(2)); // total 9s
-        assert_eq!(
-            s.current_pose(),
-            Pose::Grass,
-            "Grass after first 8s boundary"
-        );
-        s.tick(Duration::from_secs(8)); // total 17s
-        assert_eq!(
-            s.current_pose(),
-            Pose::Curled,
-            "Curled after second boundary"
-        );
-        s.tick(Duration::from_secs(8)); // total 25s
-        assert_eq!(s.current_pose(), Pose::Sit, "wraps back to Sit");
-    }
-
-    #[test]
-    fn pinned_mode_never_advances() {
-        let mut s = AnimState::new(Mode::Pinned(Pose::Grass));
-        for _ in 0..10 {
-            s.tick(Duration::from_secs(8));
-        }
-        assert_eq!(s.current_pose(), Pose::Grass);
-    }
-
-    #[test]
-    fn breathing_offset_alternates_every_2_5_seconds() {
-        let mut s = AnimState::new(Mode::Cycle);
-        assert_eq!(s.breathing_offset(), 0, "0s -> 0");
-        s.tick(Duration::from_millis(2400));
-        assert_eq!(s.breathing_offset(), 0, "2.4s -> 0");
-        s.tick(Duration::from_millis(200)); // 2.6s
-        assert_eq!(s.breathing_offset(), 1, "2.6s -> 1");
-        s.tick(Duration::from_millis(2500)); // 5.1s
-        assert_eq!(s.breathing_offset(), 0, "5.1s -> 0");
-    }
-
-    #[test]
-    fn breathing_offset_independent_of_mode() {
-        let mut a = AnimState::new(Mode::Cycle);
-        let mut b = AnimState::new(Mode::Pinned(Pose::Sit));
-        let dt = Duration::from_millis(2700);
-        a.tick(dt);
-        b.tick(dt);
-        assert_eq!(a.breathing_offset(), b.breathing_offset());
+    fn frame_index_advances_with_time() {
+        let mut a = CatAnimation::new();
+        a.started = Some(Instant::now() - Duration::from_millis(350));
+        assert_eq!(a.current_frame_index(57), 3);
     }
 }
