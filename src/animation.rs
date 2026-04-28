@@ -48,6 +48,65 @@ impl AnimState {
     }
 }
 
+use cellophane::{Animation, Cell, Frame};
+use cellophane::crossterm::style::Color;
+
+const LAVENDER: Color = Color::Rgb { r: 177, g: 156, b: 217 };
+
+pub struct CatAnimation {
+    state: AnimState,
+    rows: usize,
+    cols: usize,
+}
+
+impl CatAnimation {
+    pub fn new(mode: Mode) -> Self {
+        Self { state: AnimState::new(mode), rows: 0, cols: 0 }
+    }
+}
+
+impl Animation for CatAnimation {
+    fn init_with(&mut self, initial: Frame) {
+        let (rows, cols) = initial.dims().unwrap_or((0, 0));
+        self.rows = rows;
+        self.cols = cols;
+    }
+
+    fn update(&mut self) -> Frame {
+        self.state.tick(Duration::from_millis(16));
+
+        let mut frame = Frame::with_capacity(self.cols, self.rows);
+        let sprite = self.state.current_pose().sprite();
+
+        // Center horizontally; center vertically with breathing offset.
+        let start_col = self.cols.saturating_sub(sprite.width) / 2;
+        let mid_row = self.rows.saturating_sub(sprite.height) / 2;
+        let start_row = mid_row + self.state.breathing_offset();
+
+        for (line_idx, line) in sprite.lines.iter().enumerate() {
+            for (col_idx, ch) in line.chars().enumerate() {
+                if ch == ' ' {
+                    continue; // preserve transparency over background
+                }
+                let row = start_row + line_idx;
+                let col = start_col + col_idx;
+                if let Some(cell) = frame.get_cell_mut(row, col) {
+                    *cell = Cell::default().with_char(ch).with_fg(LAVENDER);
+                }
+            }
+        }
+
+        frame
+    }
+
+    fn is_done(&self) -> bool { false }
+
+    fn resize(&mut self, w: usize, h: usize) {
+        self.cols = w;
+        self.rows = h;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
