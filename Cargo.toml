@@ -1,7 +1,11 @@
 [package]
-name = "pet"
+name = "maxwell"
 version = "0.1.0"
 edition = "2024"
+
+[[bin]]
+name = "maxwell"
+path = "src/main.rs"
 
 [dependencies]
 cellophane = "0.2.3"
